@@ -1,0 +1,547 @@
+/* Page: graystoneindustries.co design lock (deep-blue field, Geist, mint accent, thin rules only where
+   they carry meaning). Console: a Claude Code surface resting on that field, borderless and slightly
+   translucent. Prose: no container; it sits directly on the page. */
+@font-face{font-family:'Geist';font-weight:100 900;font-display:swap;src:url('fonts/geist-latin-wght-normal.woff2') format('woff2-variations')}
+@font-face{font-family:'Geist Mono';font-weight:100 900;font-display:swap;src:url('fonts/geist-mono-latin-wght-normal.woff2') format('woff2-variations')}
+
+:root{
+  --ground:#061726;
+  --text:#F6FAFD; --text-2:#C9D6E0; --muted:#8EA3B3; --scaffold:#5F7688;
+  --accent:#6FD8BE;
+  --sans:'Geist',system-ui,-apple-system,sans-serif; --mono:'Geist Mono',ui-monospace,Menlo,monospace;
+  --t-bg:rgba(15,15,14,.90); --t-text:#ECEAE4; --t-dim:#A19F99; --t-faint:#75736D; --t-claude:#D97757;
+  --t-green:#4EBA65; --t-user:rgba(255,255,255,.07); --t-border:#4A4945; --t-code:rgba(255,255,255,.06);
+  --tmono:'SF Mono',Menlo,Monaco,'Geist Mono',monospace;
+  --tsize:16.5px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--ground);color:var(--text);font-family:var(--sans)}
+body{display:grid;grid-template-rows:auto 1fr;height:100vh;overflow:hidden}
+.visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ---------- top: eyebrow and the argument rail ---------- */
+.top{display:grid;grid-template-columns:auto 1fr;gap:28px;align-items:center;max-width:1680px;width:100%;margin:0 auto;padding:18px 44px 4px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
+.eyebrow .sep{color:var(--scaffold)}
+.rail{display:flex;gap:6px;justify-content:flex-end;min-width:0}
+.phase{display:flex;flex-direction:column;gap:6px;align-items:flex-start;background:none;border:0;padding:4px 8px;cursor:pointer;color:var(--scaffold);font:11.5px var(--mono);letter-spacing:.12em;text-transform:uppercase;border-radius:3px}
+.phase:hover{color:var(--text-2)}
+.phase.done{color:var(--muted)}
+.phase.on{color:var(--accent)}
+.phase:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ticks{display:flex;gap:3px}
+.ticks i{display:block;width:11px;height:3px;background:rgba(255,255,255,.14);border-radius:1px}
+.ticks i.seen{background:var(--muted)}
+.ticks i.now{background:var(--accent)}
+
+/* ---------- stage ---------- */
+.stage{display:grid;grid-template-columns:minmax(0,1.62fr) minmax(0,1fr);gap:56px;max-width:1680px;width:100%;margin:0 auto;padding:22px 44px 26px;min-height:0}
+.left{display:flex;flex-direction:column;min-height:0;gap:14px}
+
+.console{position:relative;flex:1;display:flex;flex-direction:column;min-height:0;background:var(--t-bg);border-radius:6px;
+  box-shadow:0 24px 60px rgba(0,0,0,.28);font-family:var(--tmono);color:var(--t-text);font-size:var(--tsize);line-height:1.52}
+.term{flex:1;overflow-y:auto;padding:22px 28px 10px;scroll-behavior:smooth}
+.term:focus{outline:none}
+.term:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;border-radius:6px}
+.banner{display:flex;gap:18px;align-items:center;margin-bottom:22px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,.06)}
+.logo{margin:0;color:var(--t-claude);font:15px/1.02 var(--tmono)}
+.banner-text{font-size:.86em;line-height:1.45}
+.dim{color:var(--t-dim)} .faint{color:var(--t-faint)}
+
+.log > *{margin:0 0 16px}
+.umsg{background:var(--t-user);padding:10px 14px;border-radius:4px;white-space:pre-wrap;color:var(--t-text);border-left:2px solid transparent;transition:opacity .5s ease}
+.umsg::before{content:'❯ ';color:var(--t-dim)}
+.umsg.lit{border-left-color:rgba(255,255,255,.65);background:rgba(255,255,255,.1);color:#fff}
+.amsg{position:relative;padding-left:24px}
+.amsg::before{content:'⏺';position:absolute;left:0;top:0;color:var(--t-text)}
+.amsg.cont::before{content:none}
+.tool{position:relative;padding-left:24px}
+.tool::before{content:'⏺';position:absolute;left:0;top:0;color:var(--t-green)}
+.tool.err::before{color:#E5534B}
+.tool .name{font-weight:700}
+.result{display:flex;padding-left:24px;color:var(--t-dim)}
+.result .elbow{color:var(--t-faint)}
+.result .rbody{white-space:pre-wrap;min-width:0}
+.note{color:var(--t-faint);font-style:italic;padding-left:24px}
+
+.amsg p{margin:0 0 .75em}
+.amsg p:last-child{margin-bottom:0}
+.amsg h1,.amsg h2,.amsg h3,.amsg h4{font-size:1em;margin:1.1em 0 .5em;color:#fff}
+.amsg h1,.amsg h2{text-decoration:underline;text-underline-offset:3px}
+.amsg ul,.amsg ol{margin:0 0 .75em;padding-left:1.6em}
+.amsg li{margin:.15em 0}
+.amsg strong{color:#fff}
+.amsg code{background:var(--t-code);color:#BCC7F2;padding:0 .3em;border-radius:3px}
+.amsg pre{background:var(--t-code);padding:10px 12px;overflow-x:auto;border-radius:3px}
+.amsg pre code{background:none;padding:0;color:var(--t-text)}
+.amsg table{border-collapse:collapse;margin:.4em 0 .9em;font-size:.9em;display:block;overflow-x:auto;max-width:100%}
+.amsg th,.amsg td{border:1px solid var(--t-border);padding:4px 9px;text-align:left;vertical-align:top}
+.amsg th{color:#fff}
+.amsg blockquote{margin:0 0 .75em;padding-left:12px;border-left:2px solid var(--t-border);color:var(--t-dim)}
+.amsg a{color:#8AB4F8}
+
+/* attention gradient while presenting: current, previous, older (slight blur on older only) */
+.beat{transition:opacity .5s ease, filter .5s ease;border-left:2px solid transparent;margin-left:-14px;padding-left:12px}
+.beat.lit{opacity:1;border-left-color:rgba(255,255,255,.6);animation:settle .45s ease both}
+.beat.prev{opacity:.55}
+.beat.past{opacity:.32;filter:blur(.6px)}
+.umsg.past{opacity:.5}
+/* inspecting (paused, scrolled back, or a part clicked): the whole record is legible */
+body.inspect .beat,body.inspect .umsg{opacity:1;filter:none}
+body.inspect .beat.lit{border-left-color:rgba(255,255,255,.3)}
+body.paused .beat{cursor:pointer}
+.tcur{color:var(--t-claude);animation:blink 1s steps(1) infinite}
+
+/* opening screens: the console introduces the case (page-authored, not session output) */
+.intro{color:var(--t-text)}
+.intro .kicker{color:var(--t-claude);margin:0 0 12px;font-size:.86em;letter-spacing:.04em}
+.intro h2{font:600 1.45em/1.28 var(--sans);margin:0 0 14px;color:#fff;max-width:30ch}
+.intro p{margin:0 0 12px;color:var(--t-dim);max-width:64ch}
+.intro .files{margin:6px 0 16px;padding:0;list-style:none}
+.intro .files li{padding:3px 0;color:var(--t-text)}
+.intro .files li span{color:var(--t-faint)}
+.intro .legend{display:grid;grid-template-columns:auto 1fr;gap:12px 20px;align-items:baseline;margin:12px 0 16px}
+.intro .legend .k{color:var(--t-text);white-space:nowrap}
+.intro .legend .v{color:var(--t-dim)}
+.intro .src{font-size:.78em;color:var(--t-faint);margin-top:22px}
+
+.spinner{padding:0 28px 8px;color:var(--t-claude)}
+.star{display:inline-block;animation:spin 1.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.inputbox{margin:0 28px;padding:10px 4px;border-top:1px solid var(--t-border);border-bottom:1px solid var(--t-border);white-space:pre-wrap;min-height:44px;max-height:38%;overflow-y:auto;transition:box-shadow .4s ease}
+.inputbox.typing{box-shadow:inset 2px 0 0 rgba(255,255,255,.65);color:#fff}
+.caret{color:var(--t-dim);margin-right:8px}
+.cursor{animation:blink 1.05s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.termfoot{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:8px 32px 12px;font-size:12.5px}
+.mode{color:#B19CD9;white-space:nowrap}
+.meta{color:var(--t-faint);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.dots{display:flex;gap:6px;align-items:center}
+.dot{width:7px;height:7px;border-radius:50%;border:1px solid var(--t-faint)}
+.dot.seen{background:var(--t-faint)}
+.dot.core{border-color:var(--t-dim)}
+.dot.on{background:var(--t-claude);border-color:var(--t-claude);box-shadow:0 0 0 3px rgba(217,119,87,.22)}
+.dot.q{border-radius:1px}
+.latest{position:absolute;right:30px;bottom:110px;font:12px var(--mono);color:var(--ground);background:var(--accent);border:0;border-radius:3px;padding:6px 10px;cursor:pointer}
+
+/* ---------- controls: quiet, borderless, under the console ---------- */
+.controls{display:flex;gap:22px;align-items:center;padding:0 4px}
+.cgroup{display:inline-flex;align-items:center;gap:2px}
+.cgroup.right{margin-left:auto;gap:8px}
+.clabel{font:11.5px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--scaffold);padding:0 6px}
+.controls button,.controls select{font:13px var(--mono);color:var(--muted);background:transparent;border:0;border-radius:3px;padding:6px 10px;cursor:pointer}
+.controls select{max-width:30em;color:var(--text-2)}
+.controls select option{background:var(--ground)}
+.controls button:hover,.controls select:hover{color:var(--text)}
+.controls button.primary{color:var(--ground);background:var(--accent);padding:6px 16px}
+.controls button[aria-pressed="true"]{color:var(--accent)}
+.controls :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ---------- prose: directly on the page ---------- */
+.prose{display:flex;flex-direction:column;min-height:0;overflow:hidden;padding:26px 8px 12px 0}
+.sec-no{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin:0}
+.prose h1{font-weight:500;font-size:26px;line-height:1.24;margin:12px 0 26px;color:var(--text);letter-spacing:-.01em;max-width:24ch}
+.plabel{font-family:var(--mono);font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--scaffold);margin:0 0 10px}
+.plabel.accent{color:var(--accent)}
+.ask{margin:0 0 22px;padding:2px 0 2px 16px;border-left:2px solid rgba(255,255,255,.14);transition:border-color .5s ease,opacity .5s ease}
+.ask.lit{border-left-color:rgba(255,255,255,.65)}
+.asktext{margin:0;font-size:18px;line-height:1.55;color:var(--text);max-width:36ch}
+.why p{font-size:17px;line-height:1.62;color:var(--text-2);margin:0 0 14px;max-width:36ch}
+.more{align-self:flex-start;background:none;border:0;padding:0;font:12px var(--mono);letter-spacing:.08em;color:var(--muted);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.more:hover{color:var(--text)}
+.read{margin-top:26px;padding-left:18px;border-left:2px solid var(--accent)}
+.walk p{font-size:19px;line-height:1.56;color:var(--text);margin:0;max-width:34ch;animation:settle .5s ease both}
+.draft{margin:auto 0 0;padding-top:14px;font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;color:var(--scaffold)}
+.prose.answering .ask,.prose.reading .ask{opacity:.62}
+.prose.answering .asktext,.prose.reading .asktext{font-size:15px;color:var(--text-2)}
+.prose.answering .why p,.prose.reading .why p{font-size:15px;color:var(--muted)}
+@keyframes settle{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* staged fitting (app.js fitProse): only when the column would otherwise overflow; never scrolls */
+.prose.fit1 h1{font-size:23px;margin-bottom:18px}
+.prose.fit1 .why p{font-size:16px}
+.prose.fit2 .asktext{font-size:16px}
+.prose.fit2 .walk p{font-size:17.5px}
+.prose.fit2 .read{margin-top:18px}
+.prose.fit3 .why p{font-size:15px;line-height:1.52}
+.prose.fit3.reading .why-wrap{display:none}
+.prose.fit4 h1{font-size:20px;margin:8px 0 14px}
+.prose.fit4 .walk p{font-size:16px}
+.prose.fit4 .asktext{font-size:14.5px}
+.prose.fit5 .why p,.prose.fit5 .asktext{font-size:13.5px;line-height:1.46;margin-bottom:8px}
+.prose.fit5 .ask{margin-bottom:12px}
+.prose.fit6 .walk p{font-size:15px}
+.prose.fit6.reading .ask{display:none}
+.prose.fit7 .why p,.prose.fit7 .asktext{font-size:12.5px;line-height:1.4}
+.prose.fit7 h1{font-size:18px}
+.prose.fit7{padding-top:10px}
+
+/* ---------- presenter mode ---------- */
+body.present{--tsize:18px}
+body.present .draft{display:none}
+
+@media (max-width:1500px){ :root{--tsize:15.5px} .stage{gap:40px;padding:18px 32px 20px} .top{padding:14px 32px 2px} }
+@media (max-width:1280px){ :root{--tsize:14.5px} .stage{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:30px;padding:14px 22px 16px} .top{padding:12px 22px 0} }
+@media (max-width:900px){
+  body{height:auto;overflow:auto}
+  .stage{grid-template-columns:1fr}
+  .console{height:72vh}
+  .rail{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important} .beat.past{filter:none}}
+
+/* ---------- prelude (opening screens): sparse, typographic, page-authored ---------- */
+.provtag{position:absolute;top:14px;right:22px;margin:0;font:11px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--t-faint);z-index:2}
+body:not(.prelude) .provtag{color:var(--t-claude)}
+body.prelude .banner,body.prelude .inputbox,body.prelude .termfoot{display:none}
+body.prelude .term{display:flex;flex-direction:column;justify-content:center;padding:40px 64px}
+.prel{font-family:var(--tmono);color:var(--t-text)}
+.pl{opacity:0;transform:translateY(6px);animation:pl .7s ease forwards;animation-delay:var(--d)}
+@keyframes pl{to{opacity:1;transform:none}}
+.pl.kick{font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:var(--t-claude);margin-bottom:18px}
+.pl.big{font-size:clamp(26px,2.3vw,38px);line-height:1.2;color:#fff;margin-bottom:6px}
+.pl.gap{height:26px}
+.pl.line{font-size:clamp(18px,1.45vw,24px);line-height:1.5;color:var(--t-dim)}
+.pl.kv{display:grid;grid-template-columns:18ch 1fr;font-size:clamp(16px,1.25vw,20px);line-height:1.7;color:#fff}
+.pl.kv span{color:var(--t-faint)}
+.pl.file{font-size:clamp(14px,1.05vw,17px);line-height:1.7;color:var(--t-dim);white-space:pre}
+.pl.file em{font-style:normal;color:var(--t-faint)}
+.pl.tree{font-size:clamp(17px,1.35vw,22px);line-height:1.65;color:#fff;white-space:pre}
+.pl.cursor{color:var(--t-text);animation:pl .7s ease forwards, blink 1.05s steps(1) infinite 1s;margin-top:14px}
+/* prose carries more authority during the prelude */
+body.prelude .prose h1{font-size:34px;line-height:1.18;max-width:18ch;margin:16px 0 30px}
+body.prelude .why p{font-size:20px;line-height:1.6;color:var(--text-2);max-width:32ch}
+body.prelude .draft{visibility:hidden}
+@media (prefers-reduced-motion:reduce){.pl{opacity:1;transform:none}}
+body:not(.prelude) .banner{animation:settle .6s ease both}
+
+/* ======================= Pass 5: one near-black field, bounded terminal, larger type, fewer labels ======================= */
+:root{
+  --ground:#08090A;
+  --text:#EFEDE8; --text-2:#CFCCC5; --muted:#8E8C86; --scaffold:#66645F;
+  --t-bg:#111213;
+  --tsize:17.5px;
+}
+.console{box-shadow:0 20px 50px rgba(0,0,0,.45);border-radius:5px}
+.banner{border-bottom-color:rgba(255,255,255,.07)}
+.inputbox{border-top-color:rgba(255,255,255,.1);border-bottom-color:rgba(255,255,255,.1)}
+/* the terminal is a bounded object, not a full-height pane; long replies scroll inside it */
+.left{justify-content:flex-start}
+.console{flex:0 0 auto;height:min(74vh,calc(100vh - 170px))}
+.stage{padding-top:30px;align-items:start;height:100%}
+/* argument rail: larger and legible */
+.phase{font-size:12.5px;color:#76746F;letter-spacing:.14em}
+.phase.done{color:var(--muted)}
+.ticks i{width:12px;background:rgba(255,255,255,.12)}
+/* prose: directly on the field; framing before the answer, one note during it, otherwise quiet */
+.prose{padding-top:34px}
+.sec-no{font-size:12.5px}
+.prose h1{font-size:31px;line-height:1.2;margin:14px 0 30px;max-width:22ch}
+.why p{font-size:20px;line-height:1.6;color:var(--text-2);max-width:34ch;margin:0 0 16px}
+.walk{padding-left:20px;border-left:2px solid var(--accent)}
+.walk p{font-size:21px;line-height:1.55;color:var(--text);max-width:32ch;margin:0}
+/* controls: symbols only, quiet */
+.controls{gap:18px}
+.controls button{font-size:15px;padding:6px 11px}
+.controls select{font-size:13px}
+/* fitting stages retuned for the larger scale */
+.prose.fit1 h1{font-size:27px;margin-bottom:22px}
+.prose.fit1 .why p{font-size:18.5px}
+.prose.fit2 .walk p{font-size:19px}
+.prose.fit3 .why p{font-size:17px;line-height:1.52}
+.prose.fit4 h1{font-size:23px;margin:8px 0 16px}
+.prose.fit4 .walk p{font-size:17px}
+.prose.fit5 .why p{font-size:15.5px;line-height:1.48}
+.prose.fit6 .walk p{font-size:15.5px}
+.prose.fit7 .why p{font-size:14px;line-height:1.42}
+.prose.fit7 h1{font-size:20px}
+body.prelude .prose h1{font-size:36px}
+body.prelude .why p{font-size:21px}
+body.present{--tsize:19px}
+@media (max-width:1500px){ :root{--tsize:16px} }
+@media (max-width:1280px){ :root{--tsize:15px} }
+/* provenance tag sits just above the terminal, on the field, so replies never scroll under it */
+.provtag{top:-24px;right:2px}
+
+/* ======================= Pass 6: one floating black screen; scratchpad prelude; rare mint ======================= */
+:root{ --page:#040506; --ground:#080A0B; --t-bg:#101110; --text:#F3F4F2; --text-2:#D2D5D2; --muted:#929A9F; --scaffold:#646B6F; }
+html,body{background:var(--page)}
+body{display:flex;align-items:center;justify-content:center}
+.screen{display:grid;grid-template-rows:auto 1fr;width:min(1520px,calc(100vw - 64px));height:min(90vh,calc(100vh - 40px));background:var(--ground);box-shadow:0 28px 90px rgba(0,0,0,.35);border-radius:3px}
+.top,.stage{max-width:none;margin:0}
+.top{padding:20px 40px 0}
+.stage{padding:24px 40px 22px;gap:50px;grid-template-columns:minmax(0,1.85fr) minmax(0,1fr);height:auto;min-height:0}
+.console{height:auto;flex:1 1 auto;max-height:100%;border-radius:3px;box-shadow:none}
+.left{height:100%}
+/* rail: phase names only, the current one marked */
+.phase{padding:4px 10px 8px;border-bottom:1px solid transparent;border-radius:0}
+.phase.on{border-bottom-color:var(--accent)}
+/* mint is rare: Play is plain text */
+.controls button.primary{background:none;color:var(--accent);padding:6px 12px}
+/* prelude in the author's register: sparse lines, no headings */
+.pl.big{font-size:clamp(24px,2.1vw,34px);line-height:1.28;margin:0}
+.pl.line{font-size:clamp(18px,1.5vw,24px);line-height:1.55;color:#fff}
+.pl.dim2{color:var(--t-dim)}
+.pl.tree{font-size:clamp(17px,1.35vw,21px);line-height:1.6;color:var(--t-dim)}
+.pl.neq{font-size:clamp(18px,1.5vw,24px);line-height:1.4;color:var(--t-faint);padding-left:4ch}
+.pl.gap{height:24px}
+.disclose{margin:auto 0 0;padding-top:16px;font-family:var(--mono);font-size:11px;line-height:1.5;color:var(--scaffold);max-width:44ch}
+.provtag{letter-spacing:.16em}
+
+/* ======================= Pass 7: a big horizontal screen; type scales with it ======================= */
+.screen{width:min(86vw,2600px);height:min(86vh,calc(100vh - 32px))}
+.stage{grid-template-columns:minmax(0,1.62fr) minmax(0,1fr);gap:clamp(40px,3.2vw,72px);padding:clamp(18px,1.6vw,34px) clamp(28px,2.4vw,52px) clamp(16px,1.3vw,28px)}
+.top{padding:clamp(14px,1.2vw,26px) clamp(28px,2.4vw,52px) 0}
+/* type follows the width of the screen (about 17px terminal and 20px prose at 1600px, more on larger displays) */
+:root{--tsize:clamp(14.5px, calc(.62vw + 7px), 22px)}
+@media (max-width:1500px){:root{--tsize:clamp(14.5px, calc(.62vw + 7px), 22px)}}
+@media (max-width:1280px){:root{--tsize:clamp(14px, calc(.62vw + 7px), 22px)}}
+body.present{--tsize:clamp(16px, calc(.7vw + 8px), 24px)}
+.eyebrow,.phase,.sec-no{font-size:clamp(11px,calc(.3vw + 7px),15px)}
+.prose h1{font-size:calc(clamp(24px,calc(1vw + 14px),44px) * var(--k,1))}
+.why p{font-size:calc(clamp(17px,calc(.5vw + 12px),25px) * var(--k,1));max-width:36ch}
+.walk p{font-size:calc(clamp(18px,calc(.55vw + 12.5px),27px) * var(--k,1));max-width:34ch}
+body.prelude .prose h1{font-size:calc(clamp(28px,calc(1.2vw + 15px),50px) * var(--k,1))}
+body.prelude .why p{font-size:calc(clamp(18px,calc(.55vw + 12.5px),27px) * var(--k,1))}
+.controls button{font-size:clamp(14px,calc(.3vw + 10px),19px)}
+.controls select,.controls .clabel{font-size:clamp(12px,calc(.25vw + 9px),16px)}
+.termfoot{font-size:clamp(11.5px,calc(.25vw + 8.5px),15px)}
+/* prelude: the left side belongs to the screen itself; the Claude Code shell appears when the session starts */
+body.prelude .console{background:transparent;box-shadow:none}
+.pl.big{font-size:clamp(24px,calc(1.3vw + 10px),46px)}
+.pl.line{font-size:clamp(18px,calc(.75vw + 8px),30px)}
+.pl.tree{font-size:clamp(17px,calc(.62vw + 8px),27px)}
+.pl.neq{font-size:clamp(18px,calc(.75vw + 8px),30px)}
+body:not(.prelude) .console{animation:settle .6s ease both}
+/* the section marker already says "Before the review"; the console tag appears only with the session */
+body.prelude .provtag{visibility:hidden}
+/* the prose column is bounded by the screen, so fitProse can measure it; each fit stage shrinks the type */
+.stage{grid-template-rows:minmax(0,1fr)}
+.prose{min-height:0;max-height:100%;overflow:hidden}
+.prose.fit1{--k:.95}.prose.fit2{--k:.9}.prose.fit3{--k:.85}.prose.fit4{--k:.8}.prose.fit5{--k:.75}.prose.fit6{--k:.7}.prose.fit7{--k:.65}
+
+/* ======================= Pass 8: composition tuning ======================= */
+/* a little more black above and below the screen */
+.screen{height:min(84vh,calc(100vh - 48px))}
+/* prose gets more width; the left side has air to give */
+.stage{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)}
+.why p{max-width:40ch}
+.walk p{max-width:38ch}
+/* title and body a notch larger (the fit stages still scale them down when needed) */
+.prose h1{font-size:calc(clamp(27px,calc(1.12vw + 15.5px),50px) * var(--k,1))}
+.why p{font-size:calc(clamp(18px,calc(.55vw + 13px),27px) * var(--k,1))}
+.walk p{font-size:calc(clamp(19px,calc(.6vw + 13.5px),29px) * var(--k,1))}
+body.prelude .prose h1{font-size:calc(clamp(31px,calc(1.35vw + 17px),56px) * var(--k,1))}
+body.prelude .why p{font-size:calc(clamp(19px,calc(.62vw + 13.5px),29px) * var(--k,1))}
+/* prelude: the statement sits in the upper-middle rather than dead centre */
+body.prelude .term{justify-content:flex-start;padding-top:clamp(32px,11vh,150px)}
+/* rail: absent during the prelude; legible once the review begins, the current phase clearly active */
+.rail{transition:opacity .6s ease}
+body.prelude .rail{opacity:0;pointer-events:none}
+.phase{color:#8E9296}
+.phase.done{color:#B4B8BA}
+.phase.on{color:var(--text)}
+.phase:hover{color:var(--text)}
+/* navigation: still quiet, but discoverable */
+.controls button{color:#A9AFB2}
+.controls select{color:#C4C8C6}
+/* the editorial disclosure on the first screen: present, subordinate */
+.why p.fine{font-family:var(--mono);font-size:clamp(12px,calc(.25vw + 9px),16px);line-height:1.6;color:var(--muted);margin-top:1.6em;max-width:44ch}
+.prel.intro{max-width:34ch}
+.prel.intro .pl.line{white-space:normal}
+#prose .why p.fine{font-size:clamp(11.5px,calc(.2vw + 8.5px),14px);color:var(--scaffold)}
+.prel.intro{max-width:none}
+.prel.intro .pl.line{max-width:46ch}
+.prel.intro .pl.dim2{white-space:nowrap}
+@media (max-height:820px){body.prelude .term{padding-top:clamp(16px,5vh,60px)}}
+/* scaled prose sizes must outrank the older fixed-size fit rules; the fit stages act through --k */
+#prose h1{font-size:calc(clamp(27px,calc(1.12vw + 15.5px),50px) * var(--k,1));margin-bottom:.6em}
+#prose .why p{font-size:calc(clamp(18px,calc(.55vw + 13px),27px) * var(--k,1));line-height:1.55}
+#prose .walk p{font-size:calc(clamp(19px,calc(.6vw + 13.5px),29px) * var(--k,1))}
+body.prelude #prose h1{font-size:calc(clamp(31px,calc(1.35vw + 17px),56px) * var(--k,1))}
+body.prelude #prose .why p{font-size:calc(clamp(19px,calc(.62vw + 13.5px),29px) * var(--k,1))}
+body.prelude #prose .why p.fine,#prose .why p.fine{font-size:clamp(11.5px,calc(.2vw + 8.5px),14px);color:var(--scaffold)}
+
+/* ======================= Pass 9: own audit ======================= */
+/* parts without a note: the section framing stays, receded, instead of an empty column */
+#prose .why.recede p{font-size:calc(clamp(15px,calc(.42vw + 10.5px),21px) * var(--k,1));color:#7C8387;line-height:1.55}
+#prose .why.recede p.fine{display:none}
+/* the provenance tag sits over the console's left edge, clear of the rail's underline */
+.provtag{left:2px;right:auto}
+/* phones and narrow windows: one column, the page scrolls, nothing overflows sideways */
+@media (max-width:900px){
+  html,body{height:auto;overflow-x:hidden;overflow-y:auto}
+  body{display:block}
+  .screen{width:100%;height:auto;min-height:100vh;border-radius:0;box-shadow:none}
+  .top{padding:16px 16px 0}
+  .stage{grid-template-columns:minmax(0,1fr);grid-template-rows:auto;gap:28px;padding:32px 16px 24px}
+  .left{height:auto}
+  .console{height:68vh;flex:none}
+  .prose{max-height:none;overflow:visible}
+  .controls{flex-wrap:wrap;gap:6px 10px;padding-top:10px}
+  .controls select{max-width:100%;flex:1 1 100%;order:3}
+  body.prelude .term{padding:24px 16px}
+  .prel.intro .pl.dim2{white-space:normal}
+}
+/* long URLs and paths in tool calls wrap instead of running past the console edge */
+.tool .arg,.result .rbody{overflow-wrap:anywhere}
+
+/* ======================= Pass 10: room for the author's longer prose ======================= */
+/* opening screens: the left side is sparse, so the prose takes about half the width */
+body.prelude .stage{grid-template-columns:minmax(0,1fr) minmax(0,1.08fr)}
+body.prelude #prose .why p{max-width:46ch}
+body.prelude .prel.intro .pl.line{max-width:40ch}
+/* last resort only: a quiet scroll instead of clipped text */
+#prose.scrolls{overflow-y:auto;scrollbar-width:thin;scrollbar-color:#2A2E30 transparent;padding-right:8px}
+
+/* ======================= Pass 11: use the screen ======================= */
+/* the opening screens need no section label */
+body.prelude #secno{display:none}
+/* the prose scale (--k) is chosen per screen by fitProse; the fit-stage classes are retired */
+#prose .sec-no{font-size:calc(clamp(11px,calc(.3vw + 7px),15px) * min(var(--k,1),1.15))}
+body.prelude #prose .why p{max-width:50ch}
+#prose .why p{max-width:44ch}
+/* opening lines on the left: larger, so the statement holds its half of the screen */
+.pl.big{font-size:clamp(26px,calc(1.75vw + 8px),60px)}
+.pl.line{font-size:clamp(18px,calc(1vw + 7px),36px)}
+.pl.tree{font-size:clamp(17px,calc(.85vw + 7px),32px)}
+.pl.neq{font-size:clamp(18px,calc(1vw + 7px),36px)}
+.prel.intro .pl.line{max-width:36ch}
+/* opening lines scale with their own column (container units), so the longest line never breaks mid-phrase */
+body.prelude .term{container-type:inline-size;padding-left:0;padding-right:0}
+.pl.big{font-size:clamp(24px,4.3cqi,60px)}
+.pl.line{font-size:clamp(17px,2.85cqi,36px)}
+.pl.tree{font-size:clamp(16px,2.55cqi,32px)}
+.pl.neq{font-size:clamp(17px,2.85cqi,36px)}
+.prel.intro .pl.line{max-width:none}
+.pl.big{font-size:clamp(24px,4.6cqi,64px)}
+.pl.line,.pl.neq{font-size:clamp(17px,3.3cqi,42px)}
+.pl.tree{font-size:clamp(16px,2.9cqi,36px)}
+
+/* ======================= Pass 12: everything proportional to the screen ======================= */
+/* Sizes are fractions of the floating screen (container units), with floors but no caps, so browser zoom
+   and very wide windows keep the same composition instead of shrinking the type relative to the frame. */
+.screen{width:86vw;container-type:size;container-name:screen;--tsize:max(14px,1.23cqw)}
+body.present .screen{--tsize:max(15px,1.36cqw)}
+.eyebrow,.phase{font-size:max(11px,.86cqw)}
+.provtag{font-size:max(10.5px,.8cqw)}
+.top{padding:max(14px,1.5cqw) max(28px,3cqw) 0}
+.stage{gap:max(36px,3.6cqw);padding:max(18px,1.8cqw) max(28px,3cqw) max(16px,1.6cqw)}
+.controls button{font-size:max(13px,1.08cqw)}
+.controls select,.controls .clabel{font-size:max(12px,.95cqw)}
+.termfoot{font-size:max(11px,.9cqw)}
+#prose .sec-no{font-size:max(11px,.86cqw)}
+#prose h1{font-size:calc(max(24px,2.4cqw) * min(var(--k,1),1.25))}
+#prose .why p{font-size:calc(max(16px,1.6cqw) * var(--k,1))}
+#prose .walk p{font-size:calc(max(17px,1.7cqw) * var(--k,1))}
+#prose .why.recede p{font-size:calc(max(14px,1.25cqw) * var(--k,1))}
+body.prelude #prose h1{font-size:calc(max(28px,2.8cqw) * min(var(--k,1),1.25))}
+body.prelude #prose .why p{font-size:calc(max(17px,1.7cqw) * var(--k,1))}
+/* opening lines: proportional to their column, no caps */
+.pl.big{font-size:max(24px,4.6cqi)}
+.pl.line,.pl.neq{font-size:max(17px,3.3cqi)}
+.pl.tree{font-size:max(16px,2.9cqi)}
+/* the screen fills the window, leaving a thin dark edge so it still reads as floating */
+.screen{width:94vw;height:min(92vh,calc(100vh - 24px))}
+@media (max-width:900px){.screen{width:100%;height:auto}}
+/* the provenance tag is removed: the introduction states it once */
+.provtag{display:none!important}
+
+/* ======================= Pass 13: terminal in context ======================= */
+/* smaller terminal type, so each part is seen alongside what came before it */
+.screen{--tsize:max(13px,1cqw)}
+body.present .screen{--tsize:max(14px,1.12cqw)}
+/* the context gradient reads again now that neighbours are visible */
+.beat.prev{opacity:.5}
+.beat.past{opacity:.27;filter:blur(.5px)}
+/* bullet indents scale with the type (they were fixed at 24px) */
+.amsg,.tool,.result{padding-left:1.7em}
+
+/* ======================= Pass 14: the terminal is the evidence, the prose is commentary ======================= */
+body:not(.prelude) .stage{grid-template-columns:minmax(0,1.8fr) minmax(0,1fr)}
+.screen{--tsize:max(12.5px,.88cqw)}
+body.present .screen{--tsize:max(13.5px,1cqw)}
+#prose h1{font-size:calc(max(22px,2.05cqw) * min(var(--k,1),1.25))}
+#prose .why p{font-size:calc(max(15px,1.3cqw) * var(--k,1))}
+#prose .walk p{font-size:calc(max(15.5px,1.36cqw) * var(--k,1))}
+#prose .why.recede p{font-size:calc(max(13.5px,1.08cqw) * var(--k,1))}
+#prose .why p,#prose .walk p{max-width:40ch}
+/* controls and footer stay below the terminal text in size */
+.controls button{font-size:max(12.5px,.9cqw)}
+.controls select,.controls .clabel{font-size:max(11.5px,.8cqw)}
+.termfoot{font-size:max(10.5px,.76cqw)}
+
+/* ======================= Pass 15: one prose size per role ======================= */
+/* framing and notes share a size; the receded framing (grey, smaller) is the only deliberate variation */
+#prose .why p,#prose .walk p{font-size:calc(max(15px,1.36cqw) * var(--k,1))}
+body.prelude #prose .why p{font-size:calc(max(16px,1.5cqw) * var(--k,1))}
+#prose h1{font-size:calc(max(22px,2.05cqw) * var(--k,1))}
+body.prelude #prose h1{font-size:calc(max(26px,2.5cqw) * var(--k,1))}
+
+/* ======================= Pass 16: viewer-adjustable terminal size ======================= */
+.screen{--tsize:calc(max(12.5px,.88cqw) * var(--tz,1))}
+body.present .screen{--tsize:calc(max(13.5px,1cqw) * var(--tz,1))}
+.tz{display:inline-flex;gap:2px;margin-right:6px}
+.tz button{padding:6px 8px!important;letter-spacing:.02em}
+.tz button:disabled{opacity:.3;cursor:default}
+/* focus survives interaction: a dimmed part brightens only while pointed at */
+.beat.prev,.beat.past,.umsg.past{transition:opacity .25s ease,filter .25s ease}
+body.paused .beat.prev:hover,body.paused .beat.past:hover{opacity:.85;filter:none}
+.tzval{font:max(10.5px,.72cqw) var(--mono);color:var(--scaffold);min-width:3.2em;text-align:center;align-self:center}
+/* multi-paragraph notes */
+#prose .walk p + p{margin-top:.75em}
+
+/* ======================= Embedded (?embed=1): fill the frame, no floating edge ======================= */
+body.embed{align-items:stretch;justify-content:stretch}
+body.embed .screen{width:100vw;height:100vh;box-shadow:none;border-radius:0}
+/* embedded on graystoneindustries.co: the site's navy instead of near-black, so the frame sits in the page like the Sandia deck.
+   The terminal stays a distinct, slightly lighter panel; Claude's orange and green are unchanged. */
+body.embed{--page:#051521;--ground:#051521;--t-bg:#0B2133}
+
+/* ======================= Project 2: composed walkthrough ======================= */
+/* omitted parts of a reply are marked, never hidden silently */
+.elide{color:var(--t-faint);font-size:.88em;padding:2px 0 2px 1.7em;letter-spacing:.01em}
+/* a later turn's question, submitted inside a combined section */
+.umsg2{background:var(--t-user);padding:10px 14px;border-radius:4px;white-space:pre-wrap;color:var(--t-text);margin:14px 0}
+.umsg2::before{content:'❯ ';color:var(--t-dim)}
+.prel.intro2 .pl{white-space:normal;max-width:52ch}
+.prel.intro2 .pl.line,.prel.intro2 .pl.tree{font-size:max(15px,2.2cqi)}
+#prose strong{color:var(--text);font-weight:600}
+/* focal numbers: one quantitative accent, heavier weight, slight scale; not colour alone */
+span.qf{color:#F2C86B;font-weight:700;font-variant-numeric:tabular-nums;font-size:1.06em}
+#prose span.qf{color:#F2C86B;font-weight:700;font-variant-numeric:tabular-nums}
+.amsg table{font-variant-numeric:tabular-nums}
+
+/* post-session label (once) and figures the session saved */
+.postlabel{margin:0 0 1em;padding:.55em .8em;border-left:2px solid #F2C86B;color:#d9cfb8;font-style:italic;font-size:.92em;line-height:1.45}
+figure.sfig{margin:.8em 0 1em;padding:0}
+figure.sfig img{display:block;width:100%;max-width:980px;height:auto;border-radius:4px;background:#fbfaf7}
+figure.sfig figcaption{margin-top:.35em;color:#8a8a8a;font-size:.85em}
+.prel.intro2 .pl.tree{white-space:pre}
+
+/* Opening 1: the left side is a short file tree, so the prose gets the width (same type size as before, fewer lines) */
+body.prelude .stage{grid-template-columns:minmax(0,.74fr) minmax(0,1.26fr)}
+body.prelude #prose .why p{font-size:calc(max(16px,1.24cqw) * var(--k,1));max-width:62ch}
+body.prelude #prose h1{font-size:calc(max(26px,2.06cqw) * var(--k,1))}
+/* tables with eight or more columns: compact, so every column is usable in the console at 1366 */
+.amsg table:has(th:nth-child(8)){font-size:.76em}
+.amsg table:has(th:nth-child(8)) th,.amsg table:has(th:nth-child(8)) td{padding:3px 5px}
+/* Opening 1: the wider prose column reaches over the control bar; it has nothing clickable, so clicks pass through to the controls */
+body.prelude #prose{pointer-events:none}
+
+/* research sub-agent reports and background completions (Walkthrough 4) */
+.agentrep{margin:.5em 0 .6em 1.2em;padding:.35em .8em .4em;border-left:2px solid var(--t-border)}
+.agentrep .agenthead{font-weight:600}
+.agentrep .agenthead .arg{font-weight:400;opacity:.75}
+.agentrep .agentbody{opacity:.9}
+.agentrep .agentbody p,.agentrep .agentbody li{margin:.2em 0}
+.bgdone{opacity:.65;margin:.15em 0 .15em 1.2em}
+/* researcher checkpoint: the live sentences at the start of a prompt */
+.umsg .ckp{display:block;margin:0 0 .7em;padding:.35em .6em;border-left:3px solid #d8a657;background:rgba(216,166,87,.08);white-space:pre-wrap}
+.umsg .ckl{display:block;font-size:.8em;letter-spacing:.02em;color:#d8a657;margin-bottom:.25em}
+
+/* Walkthrough 4: the page-authored screens are longer and wider (three-column role list), so the type steps down a size and
+   a line that still does not fit wraps under its own indent instead of clipping */
+.prel.intro2 .pl.line,.prel.intro2 .pl.tree{font-size:max(12.5px,1.62cqi);line-height:1.55}
+.prel.intro2 .pl{max-width:none}
+.prel.intro2 .pl.tree{white-space:pre-wrap;padding-left:4ch;text-indent:-4ch}
